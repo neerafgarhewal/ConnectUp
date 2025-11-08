@@ -19,6 +19,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Handle response errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // If we get a 401 and we're not on the login page, redirect to login
+    if (error.response?.status === 401) {
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+        console.warn('Token expired or invalid, redirecting to login');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('userType');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Student API
 export const studentAPI = {
   register: async (data: any) => {
@@ -46,11 +65,29 @@ export const studentAPI = {
   },
 
   login: async (email: string, password: string) => {
+    console.log('Student login API call');
     const response = await api.post('/students/login', { email, password });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+    console.log('Login response:', response.data);
+    
+    if (response.data.token && response.data.data?.user) {
+      const token = response.data.token;
+      const user = response.data.data.user;
+      
+      console.log('Saving auth data:', {
+        token: token.substring(0, 20) + '...',
+        userId: user._id,
+        userEmail: user.email
+      });
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('userType', 'student');
+      
+      // Verify it was saved
+      const saved = localStorage.getItem('token');
+      console.log('Token saved?', !!saved);
+    } else {
+      console.error('Invalid response structure:', response.data);
     }
     return response.data;
   },
@@ -84,11 +121,29 @@ export const alumniAPI = {
   },
 
   login: async (email: string, password: string) => {
+    console.log('Alumni login API call');
     const response = await api.post('/alumni/login', { email, password });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+    console.log('Login response:', response.data);
+    
+    if (response.data.token && response.data.data?.user) {
+      const token = response.data.token;
+      const user = response.data.data.user;
+      
+      console.log('Saving auth data:', {
+        token: token.substring(0, 20) + '...',
+        userId: user._id,
+        userEmail: user.email
+      });
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('userType', 'alumni');
+      
+      // Verify it was saved
+      const saved = localStorage.getItem('token');
+      console.log('Token saved?', !!saved);
+    } else {
+      console.error('Invalid response structure:', response.data);
     }
     return response.data;
   },
