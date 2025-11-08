@@ -30,19 +30,19 @@ ConnectUp is a full-stack web application that bridges the gap between students 
 ## 📁 Project Structure
 
 ```
-ConnectUp/
 ├── backend/          # Express backend API
 │   ├── controllers/  # Route controllers
 │   ├── models/       # Mongoose models
 │   ├── routes/       # API routes
 │   ├── middleware/   # Custom middleware
 │   └── utils/        # Utility functions
-└── frontend/         # React frontend
-    ├── src/
-    │   ├── components/  # Reusable components
-    │   ├── pages/       # Page components
-    │   └── services/    # API services
-    └── public/
+├── frontend/         # React frontend
+│   ├── src/
+│   │   ├── components/  # Reusable components
+│   │   ├── pages/       # Page components
+│   │   └── services/    # API services
+│   └── public/
+└── README.md
 ```
 
 ## 🚀 Getting Started
@@ -56,7 +56,7 @@ ConnectUp/
 
 1. Navigate to the backend directory:
 ```bash
-cd ConnectUp/backend
+cd backend
 ```
 
 2. Install dependencies:
@@ -83,7 +83,7 @@ The backend will run on `http://localhost:5000`
 
 1. Navigate to the frontend directory:
 ```bash
-cd ConnectUp/frontend
+cd frontend
 ```
 
 2. Install dependencies:

@@ -1,7 +1,7 @@
 # Dependencies
 node_modules/
-ConnectUp/frontend/node_modules/
-ConnectUp/backend/node_modules/
+frontend/node_modules/
+backend/node_modules/
 
 # Environment variables
 .env
@@ -9,13 +9,13 @@ ConnectUp/backend/node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
-ConnectUp/backend/.env
-ConnectUp/frontend/.env
+backend/.env
+frontend/.env
 
 # Build outputs
-ConnectUp/frontend/build/
-ConnectUp/frontend/dist/
-ConnectUp/backend/dist/
+frontend/build/
+frontend/dist/
+backend/dist/
 
 # Logs
 *.log
