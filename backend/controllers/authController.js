@@ -142,27 +142,43 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // 2) Verification token
-  const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+  let decoded;
+  try {
+    decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Token decoded successfully:', { userId: decoded.id });
+  } catch (err) {
+    console.error('JWT verification failed:', err.message);
+    return next(
+      new AppError('Invalid token. Please log in again.', 401)
+    );
+  }
 
   // 3) Check if user still exists - try Student, Alumni, then User models
+  console.log('Looking for user with ID:', decoded.id);
+  
   let currentUser = await Student.findById(decoded.id);
   let userType = 'student';
   
   if (!currentUser) {
+    console.log('Not found in Student model, trying Alumni...');
     currentUser = await Alumni.findById(decoded.id);
     userType = 'alumni';
   }
   
   if (!currentUser) {
+    console.log('Not found in Alumni model, trying User...');
     currentUser = await User.findById(decoded.id);
     userType = 'user';
   }
   
   if (!currentUser) {
+    console.error('User not found in any model!');
     return next(
       new AppError('The user belonging to this token no longer exists.', 401)
     );
   }
+  
+  console.log('User found:', { id: currentUser._id, type: userType, email: currentUser.email });
 
   // 4) Check if user changed password after the token was issued (if method exists)
   if (currentUser.changedPasswordAfter && currentUser.changedPasswordAfter(decoded.iat)) {

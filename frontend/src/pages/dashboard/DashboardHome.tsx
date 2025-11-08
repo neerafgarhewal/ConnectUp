@@ -95,11 +95,18 @@ export const DashboardHome = () => {
 
   const loadDashboardData = async () => {
     try {
+      console.log('Loading dashboard data...');
+      console.log('Token:', localStorage.getItem('token')?.substring(0, 20) + '...');
+      console.log('User:', localStorage.getItem('user'));
+      
       // Load stats and profiles in parallel
       const [statsData, profilesData] = await Promise.all([
         dashboardAPI.getStats(),
         dashboardAPI.getRecommended(8),
       ]);
+
+      console.log('Stats data received:', statsData);
+      console.log('Profiles data received:', profilesData);
 
       // Update stats
       if (statsData.data?.stats) {
@@ -112,8 +119,10 @@ export const DashboardHome = () => {
         setFeaturedProfiles(profilesData.data.profiles);
       }
       setLoadingProfiles(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading dashboard data:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       setLoadingStats(false);
       setLoadingProfiles(false);
     }
