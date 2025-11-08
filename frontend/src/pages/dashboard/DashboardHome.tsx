@@ -11,8 +11,6 @@ import {
   ArrowRight,
   UserCheck,
   Bell,
-  Sparkles,
-  Zap,
   Target,
 } from 'lucide-react';
 import { Sidebar } from '../../components/dashboard/Sidebar';
@@ -165,41 +163,52 @@ export const DashboardHome = () => {
           </div>
 
           <div className="max-w-7xl mx-auto space-y-8">
-            {/* Welcome Header with Sparkles */}
+            {/* Welcome Banner with Ocean Blue Gradient */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative"
+              className="bg-gradient-to-r from-primary to-primary-dark rounded-xl p-6 text-white shadow-lg"
             >
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-gradient">
-                  Welcome Back, {currentUser?.firstName || 'User'}! 
+                <h1 className="text-2xl md:text-3xl font-bold">
+                  Welcome back, {currentUser?.firstName || 'User'}! 👋
                 </h1>
-                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
               </div>
-              <p className="text-muted-foreground flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-500" />
-                Here's what's happening with your mentorship journey
+              <p className="text-blue-100 flex items-center gap-2">
+                Here's what's happening with your mentorship journey today.
               </p>
             </motion.div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="glass p-6 rounded-xl"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <stat.icon className={`w-8 h-8 ${stat.color}`} />
-                  </div>
-                  <p className="text-3xl font-bold mb-1">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </motion.div>
-              ))}
+            {/* Stats Grid - Ocean Blue Theme */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {stats.map((stat, index) => {
+                const Icon = stat.icon;
+                const colorMap: Record<string, string> = {
+                  'text-blue-500': 'bg-blue-500',
+                  'text-green-500': 'bg-success',
+                  'text-purple-500': 'bg-purple-500',
+                  'text-amber-500': 'bg-warning',
+                };
+                return (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-surface rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-600 mb-2">{stat.label}</p>
+                        <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                      </div>
+                      <div className={`w-12 h-12 ${colorMap[stat.color] || 'bg-primary'} rounded-lg flex items-center justify-center text-white flex-shrink-0`}>
+                        <Icon size={24} />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* Quick Actions */}
