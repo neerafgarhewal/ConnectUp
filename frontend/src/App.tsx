@@ -20,7 +20,7 @@ import { PricingPage } from './pages/PricingPage';
 const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome').then(m => ({ default: m.DashboardHome })));
 const AlumniDashboard = lazy(() => import('./pages/dashboard/AlumniDashboard').then(m => ({ default: m.AlumniDashboard })));
 const FindMentorsPage = lazy(() => import('./pages/dashboard/FindMentorsPage').then(m => ({ default: m.FindMentorsPage })));
-const MessagesPage = lazy(() => import('./pages/dashboard/MessagesPage').then(m => ({ default: m.MessagesPage })));
+const MessagesPage = lazy(() => import('./pages/dashboard/MessagesPageNew').then(m => ({ default: m.MessagesPageNew })));
 const ForumPage = lazy(() => import('./pages/dashboard/ForumPage').then(m => ({ default: m.ForumPage })));
 const EventsPage = lazy(() => import('./pages/dashboard/EventsPage').then(m => ({ default: m.EventsPage })));
 const StudentProfile = lazy(() => import('./pages/dashboard/StudentProfile').then(m => ({ default: m.StudentProfile })));
