@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "postbuild": "node -e \"const fs=require('fs'); const path=require('path'); const src='dist'; const dest=path.join('..','build'); if(fs.existsSync(dest)) fs.rmSync(dest,{recursive:true}); fs.cpSync(src,dest,{recursive:true});\"",
+    "postbuild": "node -e \"const fs=require('fs'); const path=require('path'); const src='dist'; const dest=path.join('..','build'); console.log('Current dir:', process.cwd()); console.log('Copying from:', path.resolve(src)); console.log('Copying to:', path.resolve(dest)); if(fs.existsSync(dest)) fs.rmSync(dest,{recursive:true}); fs.cpSync(src,dest,{recursive:true}); console.log('Copy complete. Build exists:', fs.existsSync(dest));\"",
     "lint": "eslint .",
     "preview": "vite preview"
   },
