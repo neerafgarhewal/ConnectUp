@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Navbar } from '../components/landing/Navbar';
 import { HeroSection } from '../components/landing/HeroSection';
+import { HowItWorksSection } from '../components/landing/HowItWorksSection';
 import { FeaturesSection } from '../components/landing/FeaturesSection';
 import { StatsSection } from '../components/landing/StatsSection';
 import { TestimonialsSection } from '../components/landing/TestimonialsSection';
@@ -52,6 +53,7 @@ export const LandingPage = () => {
       <Navbar />
       <main className="flex-1">
         <HeroSection />
+        <HowItWorksSection />
         <div id="features">
           <FeaturesSection />
         </div>

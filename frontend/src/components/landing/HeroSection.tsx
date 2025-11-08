@@ -22,31 +22,40 @@ export const HeroSection = () => {
             className="text-center lg:text-left"
           >
             <motion.h1 
-              className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight"
+              className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.8 }}
             >
-              <span className="gradient-text">Connect Up</span> - Bridge Your Future
+              <span className="gradient-text">Bridge Your Future</span>
             </motion.h1>
             
             <motion.p 
-              className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0"
+              className="text-xl sm:text-2xl text-muted-foreground mb-4 max-w-3xl mx-auto lg:mx-0 leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.8 }}
             >
-              <span className="inline-block min-h-[2.5rem]">
+              Connect students with alumni mentors for career guidance, networking, and professional growth
+            </motion.p>
+            
+            <motion.p 
+              className="text-lg text-muted-foreground/80 mb-10 max-w-2xl mx-auto lg:mx-0"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+            >
+              <span className="inline-block min-h-[1.75rem]">
                 <Typewriter
                   words={[
-                    'Connect with alumni',
-                    'Find mentors',
-                    'Accelerate your career',
-                    'Build your network'
+                    'Find your perfect mentor match',
+                    'Get personalized career guidance',
+                    'Access exclusive opportunities',
+                    'Build meaningful connections'
                   ]}
                   loop={true}
                   cursor
-                  cursorStyle="_"
+                  cursorStyle="|"
                   typeSpeed={50}
                   deleteSpeed={30}
                   delaySpeed={2000}
@@ -62,14 +71,14 @@ export const HeroSection = () => {
             >
               <a 
                 href="/register/student" 
-                className="px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-full hover:opacity-90 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                className="group px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 hover:scale-105 flex items-center justify-center gap-2"
               >
                 Join as Student
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
               <a 
                 href="/register/alumni" 
-                className="px-8 py-4 bg-transparent border-2 border-primary/20 text-foreground font-medium rounded-full hover:bg-primary/10 transition-all flex items-center justify-center gap-2"
+                className="px-8 py-4 bg-white border-2 border-primary text-primary font-semibold rounded-xl hover:bg-primary hover:text-white hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
               >
                 Join as Alumni
               </a>
