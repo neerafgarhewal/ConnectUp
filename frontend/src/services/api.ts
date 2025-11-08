@@ -105,6 +105,51 @@ export const messagingAPI = {
   },
 };
 
+// Posts API
+export const postsAPI = {
+  // Get all posts (community feed)
+  getPosts: async (page = 1, limit = 10, filter = 'all') => {
+    const response = await api.get(`/posts?page=${page}&limit=${limit}&filter=${filter}`);
+    return response.data;
+  },
+  
+  // Create new post
+  createPost: async (data: { content: string; imageUrl?: string; tags?: string[]; visibility?: string }) => {
+    const response = await api.post('/posts', data);
+    return response.data;
+  },
+  
+  // Like/unlike post
+  toggleLike: async (postId: string) => {
+    const response = await api.post(`/posts/${postId}/like`);
+    return response.data;
+  },
+  
+  // Add comment
+  addComment: async (postId: string, content: string) => {
+    const response = await api.post(`/posts/${postId}/comment`, { content });
+    return response.data;
+  },
+  
+  // Share post
+  sharePost: async (postId: string) => {
+    const response = await api.post(`/posts/${postId}/share`);
+    return response.data;
+  },
+  
+  // Edit post
+  editPost: async (postId: string, data: { content: string; imageUrl?: string }) => {
+    const response = await api.patch(`/posts/${postId}`, data);
+    return response.data;
+  },
+  
+  // Delete post
+  deletePost: async (postId: string) => {
+    const response = await api.delete(`/posts/${postId}`);
+    return response.data;
+  },
+};
+
 // Student API
 export const studentAPI = {
   register: async (data: any) => {

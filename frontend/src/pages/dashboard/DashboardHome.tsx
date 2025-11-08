@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import {
   Users,
   MessageSquare,
@@ -14,6 +14,8 @@ import {
 import { Sidebar } from '../../components/dashboard/Sidebar';
 import { DashboardNavbar } from '../../components/dashboard/DashboardNavbar';
 import { authAPI, dashboardAPI } from '../../services/api';
+import { CreatePost } from '../../components/dashboard/CreatePost';
+import { CommunityFeed } from '../../components/dashboard/CommunityFeed';
 
 const quickActions = [
   {
@@ -75,6 +77,7 @@ interface DashboardStats {
 }
 
 export const DashboardHome = () => {
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [stats, setStats] = useState<DashboardStats>({
@@ -86,6 +89,8 @@ export const DashboardHome = () => {
   const [featuredProfiles, setFeaturedProfiles] = useState<any[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [postFilter, setPostFilter] = useState('all');
+  const [feedKey, setFeedKey] = useState(0);
 
   useEffect(() => {
     const user = authAPI.getCurrentUser();
@@ -136,7 +141,8 @@ export const DashboardHome = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardNavbar onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:pl-12 md:pr-6 lg:pl-12 lg:pr-8">
+          <div className="max-w-[1400px] mx-auto">
           {/* Animated Background */}
           <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
             <div className="absolute top-20 left-20 w-96 h-96 bg-primary/5 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
@@ -171,12 +177,19 @@ export const DashboardHome = () => {
               ].map((stat, index) => {
                 const Icon = stat.icon;
                 return (
-                  <motion.div
+                  <motion.button
                     key={stat.label}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-surface rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                    onClick={() => {
+                      // Navigate based on stat type
+                      if (stat.label === 'Connections') navigate('/dashboard/browse-profiles');
+                      else if (stat.label === 'Total Profiles') navigate('/dashboard/browse-profiles');
+                      else if (stat.label === 'Skills') navigate('/dashboard/my-profile');
+                      else if (stat.label === 'Interests') navigate('/dashboard/my-profile');
+                    }}
+                    className="w-full bg-surface rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-xl hover:scale-105 hover:border-primary transition-all cursor-pointer text-left"
                   >
                     {loadingStats ? (
                       <div className="animate-pulse">
@@ -194,7 +207,7 @@ export const DashboardHome = () => {
                         </div>
                       </div>
                     )}
-                  </motion.div>
+                  </motion.button>
                 );
               })}
             </div>
@@ -234,6 +247,40 @@ export const DashboardHome = () => {
               </div>
             </div>
 
+            {/* Community Feed Section */}
+            <div className="mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Community Feed</h2>
+                
+                {/* Filter Buttons */}
+                <div className="flex items-center gap-2">
+                  {['all', 'mentors', 'students', 'following'].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => {
+                        setPostFilter(filter);
+                        setFeedKey(prev => prev + 1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        postFilter === filter
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Create Post */}
+              <div className="mb-6">
+                <CreatePost onPostCreated={() => setFeedKey(prev => prev + 1)} />
+              </div>
+
+              {/* Posts Feed */}
+              <CommunityFeed key={feedKey} filter={postFilter} />
+            </div>
 
             {/* Featured Profiles Section */}
             <div>
@@ -364,6 +411,7 @@ export const DashboardHome = () => {
                 </div>
               )}
             </div>
+          </div>
           </div>
         </main>
       </div>
