@@ -6,11 +6,9 @@ import {
   MessageSquare,
   Calendar,
   TrendingUp,
-  Award,
   BookOpen,
   ArrowRight,
   UserCheck,
-  Bell,
   Target,
 } from 'lucide-react';
 import { Sidebar } from '../../components/dashboard/Sidebar';
@@ -68,43 +66,35 @@ const quickActions = [
   },
 ];
 
-const stats = [
-  { label: 'Connections', value: '12', icon: Users, color: 'text-blue-500' },
-  { label: 'Messages', value: '24', icon: MessageSquare, color: 'text-green-500' },
-  { label: 'Events Attended', value: '8', icon: Calendar, color: 'text-purple-500' },
-  { label: 'Profile Views', value: '156', icon: TrendingUp, color: 'text-amber-500' },
-];
-
-const recentActivity = [
-  {
-    id: 1,
-    type: 'message',
-    text: 'New message from Dr. Sarah Johnson',
-    time: '5 minutes ago',
-    icon: MessageSquare,
-  },
-  {
-    id: 2,
-    type: 'event',
-    text: 'Web Development Workshop starts in 1 hour',
-    time: '1 hour ago',
-    icon: Calendar,
-  },
-  {
-    id: 3,
-    type: 'connection',
-    text: 'Alex Kumar accepted your mentorship request',
-    time: '2 hours ago',
-    icon: UserCheck,
-  },
-  {
-    id: 4,
-    type: 'achievement',
-    text: 'You earned the "Active Learner" badge',
-    time: '1 day ago',
-    icon: Award,
-  },
-];
+// Stats will be calculated from real data
+const getStats = (user: any, profiles: any[]) => {
+  return [
+    { 
+      label: 'Connections', 
+      value: user?.connections?.length || 0, 
+      icon: Users, 
+      color: 'text-blue-500' 
+    },
+    { 
+      label: 'Total Profiles', 
+      value: profiles.length, 
+      icon: MessageSquare, 
+      color: 'text-green-500' 
+    },
+    { 
+      label: 'Skills', 
+      value: user?.skills?.length || 0, 
+      icon: Calendar, 
+      color: 'text-purple-500' 
+    },
+    { 
+      label: 'Interests', 
+      value: user?.careerInterests?.length || user?.mentorshipAreas?.length || 0, 
+      icon: TrendingUp, 
+      color: 'text-amber-500' 
+    },
+  ];
+};
 
 export const DashboardHome = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -181,7 +171,7 @@ export const DashboardHome = () => {
 
             {/* Stats Grid - Ocean Blue Theme */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {stats.map((stat, index) => {
+              {getStats(currentUser, featuredProfiles).map((stat: any, index: number) => {
                 const Icon = stat.icon;
                 const colorMap: Record<string, string> = {
                   'text-blue-500': 'bg-blue-500',
@@ -246,60 +236,6 @@ export const DashboardHome = () => {
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <h2 className="text-2xl font-bold mb-4">Recent Activity</h2>
-                <div className="glass rounded-xl p-6 space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <motion.div
-                      key={activity.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-start gap-4 p-4 rounded-lg hover:bg-foreground/5 transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <activity.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium mb-1">{activity.text}</p>
-                        <p className="text-sm text-muted-foreground">{activity.time}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Upcoming Events */}
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Upcoming</h2>
-                <div className="glass rounded-xl p-6 space-y-4">
-                  <div className="p-4 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="w-4 h-4 text-primary" />
-                      <p className="text-sm font-medium text-primary">Today, 3:00 PM</p>
-                    </div>
-                    <p className="font-bold mb-1">Web Dev Workshop</p>
-                    <p className="text-sm text-muted-foreground">Online Event</p>
-                  </div>
-                  <div className="p-4 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Bell className="w-4 h-4 text-amber-500" />
-                      <p className="text-sm font-medium text-amber-500">Tomorrow, 10:00 AM</p>
-                    </div>
-                    <p className="font-bold mb-1">1-on-1 with Mentor</p>
-                    <p className="text-sm text-muted-foreground">Dr. Sarah Johnson</p>
-                  </div>
-                  <Link
-                    to="/dashboard/events"
-                    className="block text-center py-2 text-primary hover:underline text-sm font-medium"
-                  >
-                    View all events →
-                  </Link>
-                </div>
-              </div>
-            </div>
 
             {/* Featured Profiles Section */}
             <div>

@@ -33,8 +33,11 @@ export const StudentProfile = () => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
+        console.log('Fetching profile for ID:', id);
         const response = await studentAPI.getProfile(id!);
+        console.log('Profile data received:', response.data);
         setProfile(response.data.student);
+        toast.success('Profile loaded successfully');
       } catch (error: any) {
         console.error('Error fetching profile:', error);
         toast.error('Failed to load profile');
@@ -45,6 +48,8 @@ export const StudentProfile = () => {
     };
 
     if (id) {
+      // Reset profile when ID changes
+      setProfile(null);
       fetchProfile();
     }
   }, [id, navigate]);
