@@ -25,6 +25,7 @@ const messageRoutes = require('./routes/messages');
 const studentRoutes = require('./routes/studentRoutes');
 const alumniRoutes = require('./routes/alumniRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const messagingRoutes = require('./routes/messagingRoutes');
 
 // Initialize express app
 const app = express();
@@ -109,6 +110,7 @@ app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/alumni', alumniRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/messaging', messagingRoutes);
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {
@@ -132,38 +134,157 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 // ====================
-// SOCKET.IO CONNECTION
+// SOCKET.IO CONNECTION - REAL-TIME MESSAGING
 // ====================
-const users = {};
+const onlineUsers = new Map(); // userId -> socketId
 
 io.on('connection', (socket) => {
-  console.log('New client connected');
+  console.log('New client connected:', socket.id);
   
-  socket.on('addUser', (userId) => {
-    users[userId] = socket.id;
-    io.emit('getUsers', users);
+  // User joins - register online status
+  socket.on('user:online', (userId) => {
+    onlineUsers.set(userId, socket.id);
+    socket.userId = userId;
+    socket.join(`user:${userId}`);
+    
+    // Broadcast online status to all users
+    socket.broadcast.emit('user:status', {
+      userId,
+      status: 'online',
+      timestamp: new Date()
+    });
+    
+    console.log(`User ${userId} is now online`);
   });
 
-  socket.on('sendMessage', ({ senderId, receiverId, text }) => {
-    const receiverSocketId = users[receiverId];
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit('getMessage', {
-        senderId,
-        text,
+  // Join conversation room
+  socket.on('conversation:join', (conversationId) => {
+    socket.join(`conversation:${conversationId}`);
+    console.log(`User joined conversation: ${conversationId}`);
+  });
+
+  // Leave conversation room
+  socket.on('conversation:leave', (conversationId) => {
+    socket.leave(`conversation:${conversationId}`);
+  });
+
+  // Send message (real-time delivery)
+  socket.on('message:send', (data) => {
+    const { conversationId, message, recipientId } = data;
+    
+    // Emit to recipient if online
+    if (recipientId) {
+      io.to(`user:${recipientId}`).emit('message:new', {
+        conversationId,
+        message
+      });
+    }
+    
+    // Emit to conversation room
+    socket.to(`conversation:${conversationId}`).emit('message:new', {
+      conversationId,
+      message
+    });
+    
+    console.log(`Message sent in conversation ${conversationId}`);
+  });
+
+  // Message delivered confirmation
+  socket.on('message:delivered', (data) => {
+    const { messageId, senderId } = data;
+    
+    if (senderId) {
+      io.to(`user:${senderId}`).emit('message:status', {
+        messageId,
+        status: 'delivered',
         timestamp: new Date()
       });
     }
   });
 
+  // Message read confirmation
+  socket.on('message:read', (data) => {
+    const { messageIds, conversationId, senderId } = data;
+    
+    if (senderId) {
+      io.to(`user:${senderId}`).emit('messages:read', {
+        messageIds,
+        conversationId,
+        timestamp: new Date()
+      });
+    }
+  });
+
+  // Typing indicator
+  socket.on('typing:start', (data) => {
+    const { conversationId, userId, recipientId } = data;
+    
+    if (recipientId) {
+      io.to(`user:${recipientId}`).emit('user:typing', {
+        conversationId,
+        userId,
+        isTyping: true
+      });
+    }
+  });
+
+  socket.on('typing:stop', (data) => {
+    const { conversationId, userId, recipientId } = data;
+    
+    if (recipientId) {
+      io.to(`user:${recipientId}`).emit('user:typing', {
+        conversationId,
+        userId,
+        isTyping: false
+      });
+    }
+  });
+
+  // Message edited
+  socket.on('message:edit', (data) => {
+    const { conversationId, message, recipientId } = data;
+    
+    if (recipientId) {
+      io.to(`user:${recipientId}`).emit('message:edited', {
+        conversationId,
+        message
+      });
+    }
+  });
+
+  // Message deleted
+  socket.on('message:delete', (data) => {
+    const { conversationId, messageId, recipientId } = data;
+    
+    if (recipientId) {
+      io.to(`user:${recipientId}`).emit('message:deleted', {
+        conversationId,
+        messageId
+      });
+    }
+  });
+
+  // Handle disconnect
   socket.on('disconnect', () => {
-    console.log('Client disconnected');
-    const userId = Object.keys(users).find(key => users[key] === socket.id);
-    if (userId) {
-      delete users[userId];
-      io.emit('getUsers', users);
+    console.log('Client disconnected:', socket.id);
+    
+    if (socket.userId) {
+      onlineUsers.delete(socket.userId);
+      
+      // Broadcast offline status
+      socket.broadcast.emit('user:status', {
+        userId: socket.userId,
+        status: 'offline',
+        lastSeen: new Date()
+      });
+      
+      console.log(`User ${socket.userId} is now offline`);
     }
   });
 });
+
+// Export io for use in controllers
+app.set('io', io);
 
 // ====================
 // ERROR HANDLING

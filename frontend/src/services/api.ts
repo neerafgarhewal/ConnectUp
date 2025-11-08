@@ -54,6 +54,57 @@ export const dashboardAPI = {
   },
 };
 
+// Messaging API
+export const messagingAPI = {
+  // Get all conversations
+  getConversations: async () => {
+    const response = await api.get('/messaging/conversations');
+    return response.data;
+  },
+  
+  // Get or create conversation
+  getOrCreateConversation: async (participantId: string) => {
+    const response = await api.post('/messaging/conversations', { participantId });
+    return response.data;
+  },
+  
+  // Get messages for a conversation
+  getMessages: async (conversationId: string, page = 1, limit = 50) => {
+    const response = await api.get(`/messaging/conversations/${conversationId}/messages?page=${page}&limit=${limit}`);
+    return response.data;
+  },
+  
+  // Send message
+  sendMessage: async (conversationId: string, data: { content: string; messageType?: string; attachmentUrl?: string; replyTo?: string }) => {
+    const response = await api.post(`/messaging/conversations/${conversationId}/messages`, data);
+    return response.data;
+  },
+  
+  // Mark messages as read
+  markAsRead: async (conversationId: string, messageIds: string[]) => {
+    const response = await api.put(`/messaging/conversations/${conversationId}/mark-read`, { messageIds });
+    return response.data;
+  },
+  
+  // Edit message
+  editMessage: async (messageId: string, content: string) => {
+    const response = await api.put(`/messaging/messages/${messageId}`, { content });
+    return response.data;
+  },
+  
+  // Delete message
+  deleteMessage: async (messageId: string) => {
+    const response = await api.delete(`/messaging/messages/${messageId}`);
+    return response.data;
+  },
+  
+  // Search messages
+  searchMessages: async (conversationId: string, query: string) => {
+    const response = await api.get(`/messaging/conversations/${conversationId}/search?q=${query}`);
+    return response.data;
+  },
+};
+
 // Student API
 export const studentAPI = {
   register: async (data: any) => {
