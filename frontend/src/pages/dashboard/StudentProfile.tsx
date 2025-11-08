@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Sidebar } from '../../components/dashboard/Sidebar';
 import { DashboardNavbar } from '../../components/dashboard/DashboardNavbar';
-import { studentAPI } from '../../services/api';
+import { studentAPI, alumniAPI } from '../../services/api';
 
 
 export const StudentProfile = () => {
@@ -34,14 +34,32 @@ export const StudentProfile = () => {
       try {
         setLoading(true);
         console.log('Fetching profile for ID:', id);
-        const response = await studentAPI.getProfile(id!);
-        console.log('Profile data received:', response.data);
-        setProfile(response.data.student);
-        toast.success('Profile loaded successfully');
+        
+        // Try student API first
+        try {
+          const response = await studentAPI.getProfile(id!);
+          console.log('Student profile data received:', response.data);
+          setProfile({ ...response.data.student, userType: 'student' });
+          return;
+        } catch (studentError: any) {
+          console.log('Not a student, trying alumni API...');
+          
+          // If student fails, try alumni API
+          try {
+            const response = await alumniAPI.getProfile(id!);
+            console.log('Alumni profile data received:', response.data);
+            setProfile({ ...response.data.alumni, userType: 'alumni' });
+            return;
+          } catch (alumniError: any) {
+            console.error('Profile not found in either API:', { studentError, alumniError });
+            toast.error('Profile not found');
+            setProfile(null);
+          }
+        }
       } catch (error: any) {
         console.error('Error fetching profile:', error);
         toast.error('Failed to load profile');
-        navigate('/dashboard');
+        setProfile(null);
       } finally {
         setLoading(false);
       }
@@ -72,7 +90,29 @@ export const StudentProfile = () => {
   }
 
   if (!profile) {
-    return null;
+    return (
+      <div className="flex h-screen bg-background overflow-hidden">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <DashboardNavbar onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Not Found</h3>
+              <p className="text-gray-600 mb-6">This profile doesn't exist or has been removed.</p>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-all"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
   }
 
   const getCategoryColor = (category: string) => {
