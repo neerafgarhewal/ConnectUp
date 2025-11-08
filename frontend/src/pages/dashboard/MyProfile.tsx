@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Sidebar } from '../../components/dashboard/Sidebar';
 import { DashboardNavbar } from '../../components/dashboard/DashboardNavbar';
+import { ProfileEditForm } from '../../components/dashboard/ProfileEditForm';
 import { authAPI, studentAPI, alumniAPI } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -57,6 +58,33 @@ export const MyProfile = () => {
     } catch (error) {
       console.error('Error loading profile:', error);
       setLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async (formData: any) => {
+    try {
+      const user = authAPI.getCurrentUser();
+      const userType = authAPI.getUserType();
+
+      const updateData = {
+        ...formData,
+        socialLinks: {
+          linkedin: formData.linkedin,
+          github: formData.github,
+          portfolio: formData.portfolio,
+        },
+      };
+
+      if (userType === 'student') {
+        await studentAPI.updateProfile(user._id, updateData);
+      } else if (userType === 'alumni') {
+        await alumniAPI.updateProfile(user._id, updateData);
+      }
+
+      await loadUserProfile();
+      setIsEditing(false);
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -385,6 +413,15 @@ export const MyProfile = () => {
           </button>
         </main>
       </div>
+
+      {/* Edit Profile Modal */}
+      {isEditing && (
+        <ProfileEditForm
+          profile={userData}
+          onSave={handleSaveProfile}
+          onCancel={() => setIsEditing(false)}
+        />
+      )}
     </div>
   );
 };

@@ -9,7 +9,6 @@ import {
   Globe,
   MessageCircle,
   MoreVertical,
-  Edit,
   TrendingUp,
   Users,
   Calendar,
@@ -27,10 +26,8 @@ export const StudentProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -51,28 +48,6 @@ export const StudentProfile = () => {
       fetchProfile();
     }
   }, [id, navigate]);
-
-  const handlePhotoUpload = async (type: 'avatar' | 'cover', file: File) => {
-    try {
-      setUploading(true);
-      // For now, we'll use a placeholder. In production, upload to cloud storage
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        if (type === 'avatar') {
-          setProfile({ ...profile, profilePicture: base64 });
-        } else {
-          setProfile({ ...profile, coverImage: base64 });
-        }
-        toast.success(`${type === 'avatar' ? 'Profile' : 'Cover'} photo updated!`);
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      toast.error('Failed to upload photo');
-    } finally {
-      setUploading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -125,19 +100,6 @@ export const StudentProfile = () => {
                   alt="Cover"
                   className="w-full h-full object-cover"
                 />
-                {isEditing && (
-                  <label className="absolute top-4 right-4 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-all flex items-center gap-2 cursor-pointer">
-                    <Edit className="w-4 h-4" />
-                    Change Cover
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => e.target.files?.[0] && handlePhotoUpload('cover', e.target.files[0])}
-                      disabled={uploading}
-                    />
-                  </label>
-                )}
               </div>
 
               {/* Profile Info */}
@@ -155,18 +117,6 @@ export const StudentProfile = () => {
                       </div>
                       {profile.online && (
                         <span className="absolute bottom-4 right-4 w-6 h-6 bg-green-500 border-4 border-background rounded-full"></span>
-                      )}
-                      {isEditing && (
-                        <label className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full hover:opacity-90 cursor-pointer">
-                          <Edit className="w-4 h-4" />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => e.target.files?.[0] && handlePhotoUpload('avatar', e.target.files[0])}
-                            disabled={uploading}
-                          />
-                        </label>
                       )}
                     </div>
 
@@ -228,11 +178,11 @@ export const StudentProfile = () => {
                         {/* Action Buttons */}
                         <div className="flex gap-2">
                           <button
-                            onClick={() => setIsEditing(!isEditing)}
+                            onClick={() => navigate(`/dashboard/messages?userId=${id}`)}
                             className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-all flex items-center gap-2"
                           >
-                            <Edit className="w-4 h-4" />
-                            {isEditing ? 'Save Profile' : 'Edit Profile'}
+                            <MessageCircle className="w-4 h-4" />
+                            Message
                           </button>
                           <button className="p-2 border border-border rounded-lg hover:bg-foreground/5 transition-all">
                             <MoreVertical className="w-5 h-5" />
