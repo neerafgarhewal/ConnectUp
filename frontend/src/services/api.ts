@@ -211,6 +211,76 @@ export const forumAPI = {
   },
 };
 
+// Events API
+export const eventsAPI = {
+  // Get all events
+  getEvents: async (category?: string, location?: string, format?: string, search?: string, sort?: string) => {
+    let url = '/events?';
+    if (category) url += `category=${category}&`;
+    if (location) url += `location=${location}&`;
+    if (format) url += `format=${format}&`;
+    if (search) url += `search=${search}&`;
+    if (sort) url += `sort=${sort}&`;
+    const response = await api.get(url);
+    return response.data;
+  },
+  
+  // Create event
+  createEvent: async (data: {
+    title: string;
+    description: string;
+    category: string;
+    date: string;
+    startTime: string;
+    endTime?: string;
+    location: string;
+    format: string;
+    coverImage?: string;
+    tags?: string[];
+    maxAttendees?: number;
+    meetingLink?: string;
+  }) => {
+    const response = await api.post('/events', data);
+    return response.data;
+  },
+  
+  // Get event by ID
+  getEvent: async (eventId: string) => {
+    const response = await api.get(`/events/${eventId}`);
+    return response.data;
+  },
+  
+  // Register for event
+  registerForEvent: async (eventId: string) => {
+    const response = await api.post(`/events/${eventId}/register`);
+    return response.data;
+  },
+  
+  // Get locations
+  getLocations: async () => {
+    const response = await api.get('/events/locations');
+    return response.data;
+  },
+  
+  // Get categories
+  getCategories: async () => {
+    const response = await api.get('/events/categories');
+    return response.data;
+  },
+  
+  // Update event
+  updateEvent: async (eventId: string, data: any) => {
+    const response = await api.patch(`/events/${eventId}`, data);
+    return response.data;
+  },
+  
+  // Delete event
+  deleteEvent: async (eventId: string) => {
+    const response = await api.delete(`/events/${eventId}`);
+    return response.data;
+  },
+};
+
 // Student API
 export const studentAPI = {
   register: async (data: any) => {

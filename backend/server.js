@@ -28,6 +28,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const messagingRoutes = require('./routes/messagingRoutes');
 const postRoutes = require('./routes/postRoutes');
 const forumRoutes = require('./routes/forumRoutes');
+const eventRoutes = require('./routes/eventRoutes');
 
 // Initialize express app
 const app = express();
@@ -115,6 +116,7 @@ app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/messaging', messagingRoutes);
 app.use('/api/v1/posts', postRoutes);
 app.use('/api/v1/forum', forumRoutes);
+app.use('/api/v1/events', eventRoutes);
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {
