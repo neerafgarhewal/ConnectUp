@@ -38,6 +38,22 @@ api.interceptors.response.use(
   }
 );
 
+// Dashboard API
+export const dashboardAPI = {
+  getStats: async () => {
+    const response = await api.get('/dashboard/stats');
+    return response.data;
+  },
+  getActivity: async () => {
+    const response = await api.get('/dashboard/activity');
+    return response.data;
+  },
+  getRecommended: async (limit = 6) => {
+    const response = await api.get(`/dashboard/recommended?limit=${limit}`);
+    return response.data;
+  },
+};
+
 // Student API
 export const studentAPI = {
   register: async (data: any) => {

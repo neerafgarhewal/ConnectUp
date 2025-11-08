@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Sidebar } from '../../components/dashboard/Sidebar';
 import { DashboardNavbar } from '../../components/dashboard/DashboardNavbar';
-import { authAPI, studentAPI, alumniAPI } from '../../services/api';
+import { authAPI, dashboardAPI } from '../../services/api';
 
 const quickActions = [
   {
@@ -66,76 +66,59 @@ const quickActions = [
   },
 ];
 
-// Stats will be calculated from real data
-const getStats = (user: any, profiles: any[]) => {
-  return [
-    { 
-      label: 'Connections', 
-      value: user?.connections?.length || 0, 
-      icon: Users, 
-      color: 'text-blue-500' 
-    },
-    { 
-      label: 'Total Profiles', 
-      value: profiles.length, 
-      icon: MessageSquare, 
-      color: 'text-green-500' 
-    },
-    { 
-      label: 'Skills', 
-      value: user?.skills?.length || 0, 
-      icon: Calendar, 
-      color: 'text-purple-500' 
-    },
-    { 
-      label: 'Interests', 
-      value: user?.careerInterests?.length || user?.mentorshipAreas?.length || 0, 
-      icon: TrendingUp, 
-      color: 'text-amber-500' 
-    },
-  ];
-};
+// Stats interface
+interface DashboardStats {
+  connections: number;
+  totalProfiles: number;
+  skills: number;
+  interests: number;
+}
 
 export const DashboardHome = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [stats, setStats] = useState<DashboardStats>({
+    connections: 0,
+    totalProfiles: 0,
+    skills: 0,
+    interests: 0,
+  });
   const [featuredProfiles, setFeaturedProfiles] = useState<any[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     const user = authAPI.getCurrentUser();
     setCurrentUser(user);
-    loadFeaturedProfiles();
+    loadDashboardData();
   }, []);
 
-  const loadFeaturedProfiles = async () => {
+  const loadDashboardData = async () => {
     try {
-      setLoadingProfiles(true);
-      const currentUser = authAPI.getCurrentUser();
-      
-      // Load both students and alumni
-      const [studentsResponse, alumniResponse] = await Promise.all([
-        studentAPI.getAllStudents(),
-        alumniAPI.getAllAlumni()
+      // Load stats and profiles in parallel
+      const [statsData, profilesData] = await Promise.all([
+        dashboardAPI.getStats(),
+        dashboardAPI.getRecommended(8),
       ]);
 
-      const students = studentsResponse.data.students.map((s: any) => ({ ...s, type: 'student' }));
-      const alumni = alumniResponse.data.alumni.map((a: any) => ({ ...a, type: 'alumni' }));
-      
-      // Combine and filter out current user
-      let allProfiles = [...students, ...alumni];
-      allProfiles = allProfiles.filter(p => p._id !== currentUser?._id);
-      
-      // Get random 6 profiles
-      const shuffled = allProfiles.sort(() => 0.5 - Math.random());
-      setFeaturedProfiles(shuffled.slice(0, 6));
-      
+      // Update stats
+      if (statsData.data?.stats) {
+        setStats(statsData.data.stats);
+      }
+      setLoadingStats(false);
+
+      // Update profiles
+      if (profilesData.data?.profiles) {
+        setFeaturedProfiles(profilesData.data.profiles);
+      }
       setLoadingProfiles(false);
     } catch (error) {
-      console.error('Error loading profiles:', error);
+      console.error('Error loading dashboard data:', error);
+      setLoadingStats(false);
       setLoadingProfiles(false);
     }
   };
+
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -169,16 +152,15 @@ export const DashboardHome = () => {
               </p>
             </motion.div>
 
-            {/* Stats Grid - Ocean Blue Theme */}
+            {/* Stats Grid - Real Data from API */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {getStats(currentUser, featuredProfiles).map((stat: any, index: number) => {
+              {[
+                { label: 'Connections', value: stats.connections, icon: Users, color: 'bg-blue-500' },
+                { label: 'Total Profiles', value: stats.totalProfiles, icon: MessageSquare, color: 'bg-success' },
+                { label: 'Skills', value: stats.skills, icon: Calendar, color: 'bg-purple-500' },
+                { label: 'Interests', value: stats.interests, icon: TrendingUp, color: 'bg-warning' },
+              ].map((stat, index) => {
                 const Icon = stat.icon;
-                const colorMap: Record<string, string> = {
-                  'text-blue-500': 'bg-blue-500',
-                  'text-green-500': 'bg-success',
-                  'text-purple-500': 'bg-purple-500',
-                  'text-amber-500': 'bg-warning',
-                };
                 return (
                   <motion.div
                     key={stat.label}
@@ -187,15 +169,22 @@ export const DashboardHome = () => {
                     transition={{ delay: index * 0.1 }}
                     className="bg-surface rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-600 mb-2">{stat.label}</p>
-                        <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                    {loadingStats ? (
+                      <div className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-20 mb-2"></div>
+                        <div className="h-8 bg-gray-200 rounded w-16"></div>
                       </div>
-                      <div className={`w-12 h-12 ${colorMap[stat.color] || 'bg-primary'} rounded-lg flex items-center justify-center text-white flex-shrink-0`}>
-                        <Icon size={24} />
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-600 mb-2">{stat.label}</p>
+                          <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                        </div>
+                        <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center text-white flex-shrink-0`}>
+                          <Icon size={24} />
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </motion.div>
                 );
               })}

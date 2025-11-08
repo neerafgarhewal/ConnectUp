@@ -24,6 +24,7 @@ const matchRoutes = require('./routes/matches');
 const messageRoutes = require('./routes/messages');
 const studentRoutes = require('./routes/studentRoutes');
 const alumniRoutes = require('./routes/alumniRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Initialize express app
 const app = express();
@@ -107,6 +108,7 @@ app.use('/api/v1/matches', matchRoutes);
 app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/alumni', alumniRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {
