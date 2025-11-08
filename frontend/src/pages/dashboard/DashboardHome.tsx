@@ -141,8 +141,7 @@ export const DashboardHome = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardNavbar onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-4 md:pl-12 md:pr-6 lg:pl-12 lg:pr-8">
-          <div className="max-w-[1400px] mx-auto">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           {/* Animated Background */}
           <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
             <div className="absolute top-20 left-20 w-96 h-96 bg-primary/5 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
@@ -411,7 +410,6 @@ export const DashboardHome = () => {
                 </div>
               )}
             </div>
-          </div>
           </div>
         </main>
       </div>
