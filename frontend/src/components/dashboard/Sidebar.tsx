@@ -51,7 +51,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         initial={{ x: -280 }}
         animate={{ x: isOpen ? 0 : -280 }}
         transition={{ type: 'spring', damping: 20 }}
-        className={`fixed top-0 left-0 h-full w-64 bg-background border-r border-border z-50 lg:translate-x-0 lg:static lg:z-auto`}
+        className={`fixed top-0 left-0 h-full w-56 bg-background border-r border-border z-50 lg:translate-x-0 lg:static lg:z-auto`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
