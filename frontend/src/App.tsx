@@ -67,9 +67,8 @@ function App() {
           <Route path="/dashboard/browse-profiles" element={<BrowseProfiles />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
-          <Route path="/about" element={<div className="min-h-screen flex items-center justify-center bg-background"><h1 className="text-4xl font-bold">About Page - Coming Soon</h1></div>} />
-          <Route path="/pricing" element={<div className="min-h-screen flex items-center justify-center bg-background"><h1 className="text-4xl font-bold">Pricing Page - Coming Soon</h1></div>} />
-          {/* Add more routes as needed */}
+          {/* Catch all 404 route */}
+          <Route path="*" element={<div className="min-h-screen flex items-center justify-center bg-background"><div className="text-center"><h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1><p className="text-gray-600 mb-4">The page you're looking for doesn't exist.</p><a href="/" className="text-blue-600 hover:underline">Go back home</a></div></div>} />
         </Routes>
       </Router>
     </QueryClientProvider>
