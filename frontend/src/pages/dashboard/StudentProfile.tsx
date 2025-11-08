@@ -153,12 +153,16 @@ export const StudentProfile = () => {
                   <div className="flex flex-col md:flex-row md:items-end gap-4">
                     {/* Avatar */}
                     <div className="relative">
-                      <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-background bg-background overflow-hidden">
-                        <img
-                          src={profile.profilePicture || profile.avatar || 'https://randomuser.me/api/portraits/men/1.jpg'}
-                          alt={profile.name || profile.fullName}
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-background bg-gradient-to-br from-primary to-secondary overflow-hidden flex items-center justify-center text-white text-4xl font-bold">
+                        {profile.profilePhoto ? (
+                          <img
+                            src={profile.profilePhoto}
+                            alt={`${profile.firstName} ${profile.lastName}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span>{profile.firstName?.[0]}{profile.lastName?.[0]}</span>
+                        )}
                       </div>
                       {profile.online && (
                         <span className="absolute bottom-4 right-4 w-6 h-6 bg-green-500 border-4 border-background rounded-full"></span>
@@ -169,13 +173,33 @@ export const StudentProfile = () => {
                     <div className="flex-1 pb-4">
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h1 className="text-2xl md:text-3xl font-bold">{profile.name}</h1>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h1 className="text-2xl md:text-3xl font-bold">
+                              {profile.firstName} {profile.lastName}
+                            </h1>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              profile.userType === 'student' 
+                                ? 'bg-blue-100 text-blue-700' 
+                                : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {profile.userType === 'student' ? '🎓 Student' : '👔 Alumni'}
+                            </span>
                             {profile.verified && (
                               <CheckCircle className="w-6 h-6 text-blue-500 fill-blue-500" />
                             )}
                           </div>
-                          <p className="text-lg text-muted-foreground mb-2">{profile.role || `${profile.degree} Student`}</p>
+                          <p className="text-lg text-muted-foreground mb-2">
+                            {profile.userType === 'student' 
+                              ? `${profile.degree || 'Undergraduate'} ${profile.branch ? `in ${profile.branch}` : ''}`
+                              : `${profile.currentPosition || 'Professional'} ${profile.currentCompany ? `at ${profile.currentCompany}` : ''}`
+                            }
+                          </p>
+                          {profile.university && (
+                            <p className="text-md text-muted-foreground flex items-center gap-2">
+                              <GraduationCap className="w-4 h-4" />
+                              {profile.university}
+                            </p>
+                          )}
                           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                             {profile.location && (
                               <span className="flex items-center gap-1">
