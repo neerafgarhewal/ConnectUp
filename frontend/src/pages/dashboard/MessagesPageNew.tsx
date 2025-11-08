@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Sidebar } from '../../components/dashboard/Sidebar';
 import { DashboardNavbar } from '../../components/dashboard/DashboardNavbar';
-import { messagingAPI, authAPI } from '../../services/api';
+import { messagingAPI, authAPI, studentAPI, alumniAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useSocket } from '../../hooks/useSocket';
 
@@ -58,6 +58,7 @@ export const MessagesPageNew = () => {
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -67,12 +68,14 @@ export const MessagesPageNew = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [showMobileChat, setShowMobileChat] = useState(false);
+  const [view, setView] = useState<'conversations' | 'users'>('users'); // Default to users view
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load conversations
+  // Load conversations and users
   useEffect(() => {
     loadConversations();
+    loadAllUsers();
   }, []);
 
   // Socket listeners
@@ -99,12 +102,43 @@ export const MessagesPageNew = () => {
 
   const loadConversations = async () => {
     try {
-      setLoading(true);
       const response = await messagingAPI.getConversations();
       setConversations(response.data.conversations);
     } catch (error) {
       console.error('Error loading conversations:', error);
       toast.error('Failed to load conversations');
+    }
+  };
+
+  const loadAllUsers = async () => {
+    try {
+      setLoading(true);
+      // Load both students and alumni
+      const [studentsResponse, alumniResponse] = await Promise.all([
+        studentAPI.getAllStudents(),
+        alumniAPI.getAllAlumni()
+      ]);
+
+      const students = studentsResponse.data.students.map((s: any) => ({
+        ...s,
+        type: 'student',
+        name: `${s.firstName} ${s.lastName}`
+      }));
+      
+      const alumni = alumniResponse.data.alumni.map((a: any) => ({
+        ...a,
+        type: 'alumni',
+        name: `${a.firstName} ${a.lastName}`
+      }));
+
+      // Combine and filter out current user
+      let allUsersList = [...students, ...alumni];
+      allUsersList = allUsersList.filter(u => u._id !== currentUser?._id);
+      
+      setAllUsers(allUsersList);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      toast.error('Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -143,6 +177,48 @@ export const MessagesPageNew = () => {
     // Join conversation room via socket
     if (socket) {
       socket.emit('conversation:join', conversation.id);
+    }
+  };
+
+  const handleSelectUser = async (user: any) => {
+    try {
+      // Get or create conversation with this user
+      const response = await messagingAPI.getOrCreateConversation(user._id);
+      const conversation = response.data.conversation;
+      
+      // Format conversation
+      const formattedConv: Conversation = {
+        id: conversation._id,
+        participant: {
+          id: user._id,
+          name: user.name,
+          profilePhoto: user.profilePhoto,
+          title: user.currentPosition || user.degree,
+          subtitle: user.currentCompany || user.university
+        },
+        lastMessage: null,
+        unreadCount: 0,
+        lastMessageTime: new Date().toISOString()
+      };
+      
+      setSelectedConversation(formattedConv);
+      setShowMobileChat(true);
+      setView('conversations');
+      
+      // Load messages if conversation exists
+      if (conversation.lastMessage) {
+        loadMessages(conversation._id);
+      } else {
+        setMessages([]);
+      }
+      
+      // Join conversation room
+      if (socket) {
+        socket.emit('conversation:join', conversation._id);
+      }
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast.error('Failed to start conversation');
     }
   };
 
@@ -278,25 +354,51 @@ export const MessagesPageNew = () => {
                 />
               </div>
 
-              {/* Filters */}
-              <div className="flex gap-2 mt-3">
-                {(['all', 'mentors', 'students', 'unread'] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                      filter === f
-                        ? 'bg-primary text-white'
-                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                    }`}
-                  >
-                    {f.charAt(0).toUpperCase() + f.slice(1)}
-                  </button>
-                ))}
+              {/* View Toggle */}
+              <div className="flex gap-2 mt-3 mb-3">
+                <button
+                  onClick={() => setView('users')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    view === 'users'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  All Users
+                </button>
+                <button
+                  onClick={() => setView('conversations')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    view === 'conversations'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  Chats
+                </button>
               </div>
+
+              {/* Filters - Only show for conversations view */}
+              {view === 'conversations' && (
+                <div className="flex gap-2">
+                  {(['all', 'unread'] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        filter === f
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      {f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Conversations */}
+            {/* Conversations or Users List */}
             <div className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="p-4 space-y-3">
@@ -310,6 +412,50 @@ export const MessagesPageNew = () => {
                     </div>
                   ))}
                 </div>
+              ) : view === 'users' ? (
+                // Show all users
+                allUsers.filter(u => 
+                  !searchQuery || u.name.toLowerCase().includes(searchQuery.toLowerCase())
+                ).length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                    <div className="text-6xl mb-4">👥</div>
+                    <h3 className="text-lg font-semibold mb-2">No users found</h3>
+                    <p className="text-gray-600 text-sm">
+                      Try adjusting your search
+                    </p>
+                  </div>
+                ) : (
+                  allUsers
+                    .filter(u => !searchQuery || u.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((user) => (
+                      <button
+                        key={user._id}
+                        onClick={() => handleSelectUser(user)}
+                        className="w-full flex items-center gap-3 p-4 hover:bg-white transition-all"
+                      >
+                        <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                          {user.profilePhoto ? (
+                            <img
+                              src={user.profilePhoto}
+                              alt={user.name}
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            user.name[0].toUpperCase()
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0 text-left">
+                          <h4 className="font-semibold text-foreground truncate">
+                            {user.name}
+                          </h4>
+                          <p className="text-sm text-gray-600 truncate">
+                            {user.type === 'student' ? '🎓 Student' : '👔 Alumni'} • {user.university || user.currentCompany}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                )
               ) : filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                   <div className="text-6xl mb-4">💬</div>
