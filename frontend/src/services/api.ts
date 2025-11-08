@@ -150,6 +150,67 @@ export const postsAPI = {
   },
 };
 
+// Forum API
+export const forumAPI = {
+  // Get all posts
+  getPosts: async (page = 1, limit = 10, category?: string, tag?: string, sort?: string) => {
+    let url = `/forum/posts?page=${page}&limit=${limit}`;
+    if (category) url += `&category=${category}`;
+    if (tag) url += `&tag=${tag}`;
+    if (sort) url += `&sort=${sort}`;
+    const response = await api.get(url);
+    return response.data;
+  },
+  
+  // Create post
+  createPost: async (data: { title: string; content: string; category: string; tags?: string[] }) => {
+    const response = await api.post('/forum/posts', data);
+    return response.data;
+  },
+  
+  // Vote on post
+  votePost: async (postId: string, voteType: 'up' | 'down') => {
+    const response = await api.post(`/forum/posts/${postId}/vote`, { voteType });
+    return response.data;
+  },
+  
+  // Save/unsave post
+  toggleSave: async (postId: string) => {
+    const response = await api.post(`/forum/posts/${postId}/save`);
+    return response.data;
+  },
+  
+  // Share post
+  sharePost: async (postId: string) => {
+    const response = await api.post(`/forum/posts/${postId}/share`);
+    return response.data;
+  },
+  
+  // Add reply
+  addReply: async (postId: string, content: string) => {
+    const response = await api.post(`/forum/posts/${postId}/reply`, { content });
+    return response.data;
+  },
+  
+  // Get stats
+  getStats: async () => {
+    const response = await api.get('/forum/stats');
+    return response.data;
+  },
+  
+  // Get popular tags
+  getPopularTags: async () => {
+    const response = await api.get('/forum/tags');
+    return response.data;
+  },
+  
+  // Get trending posts
+  getTrendingPosts: async () => {
+    const response = await api.get('/forum/trending');
+    return response.data;
+  },
+};
+
 // Student API
 export const studentAPI = {
   register: async (data: any) => {
