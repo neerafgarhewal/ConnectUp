@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   MapPin,
   Linkedin,
@@ -8,7 +10,6 @@ import {
   MessageCircle,
   MoreVertical,
   Edit,
-  Award,
   TrendingUp,
   Users,
   Calendar,
@@ -16,100 +17,83 @@ import {
   CheckCircle,
   GraduationCap,
   Target,
-  Trophy,
 } from 'lucide-react';
 import { Sidebar } from '../../components/dashboard/Sidebar';
 import { DashboardNavbar } from '../../components/dashboard/DashboardNavbar';
+import { studentAPI } from '../../services/api';
 
-// Mock profile data
-const mockProfile = {
-  coverImage: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=1200',
-  avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-  name: 'Alex Kumar',
-  role: 'Student at IIT Ropar',
-  location: 'Rupnagar, Punjab',
-  online: true,
-  verified: true,
-  bio: 'Passionate computer science student interested in machine learning and web development. Looking to connect with industry professionals and learn from their experiences. Open to internship opportunities in tech.',
-  socialLinks: {
-    linkedin: 'https://linkedin.com/in/alexkumar',
-    github: 'https://github.com/alexkumar',
-    portfolio: 'https://alexkumar.dev',
-  },
-  stats: {
-    connections: 156,
-    mentorships: 3,
-    posts: 24,
-    events: 8,
-  },
-  academic: {
-    university: 'IIT Ropar',
-    degree: 'B.Tech',
-    branch: 'Computer Science',
-    year: '3rd Year',
-    graduation: '2026',
-    cgpa: '8.5',
-  },
-  skills: [
-    { name: 'Python', endorsements: 12, category: 'Programming' },
-    { name: 'React', endorsements: 8, category: 'Frontend' },
-    { name: 'Machine Learning', endorsements: 6, category: 'AI/ML' },
-    { name: 'Node.js', endorsements: 5, category: 'Backend' },
-    { name: 'SQL', endorsements: 7, category: 'Database' },
-    { name: 'Git', endorsements: 10, category: 'Tools' },
-  ],
-  interests: {
-    career: ['Software Development', 'Data Science', 'Product Management'],
-    companies: ['Google', 'Microsoft', 'Amazon'],
-    industries: ['Technology', 'FinTech', 'AI'],
-  },
-  achievements: [
-    {
-      title: 'Smart India Hackathon Winner',
-      date: 'Aug 2024',
-      description: 'Won 1st place in national hackathon with AI-based solution',
-      icon: Trophy,
-    },
-    {
-      title: 'AWS Certified Developer',
-      date: 'Jun 2024',
-      description: 'Achieved AWS Developer Associate certification',
-      icon: Award,
-    },
-    {
-      title: 'Google Code Jam Finalist',
-      date: 'Apr 2024',
-      description: 'Reached finals in competitive programming competition',
-      icon: Trophy,
-    },
-  ],
-  reviews: [
-    {
-      reviewer: {
-        name: 'Dr. Sarah Johnson',
-        avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-        role: 'Senior Engineer at Google',
-      },
-      rating: 5,
-      comment: 'Alex is a dedicated student with great potential. Very eager to learn and apply new concepts.',
-      date: '2 weeks ago',
-    },
-    {
-      reviewer: {
-        name: 'Michael Chen',
-        avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-        role: 'Product Manager at Microsoft',
-      },
-      rating: 5,
-      comment: 'Excellent communication skills and quick learner. Pleasure to mentor!',
-      date: '1 month ago',
-    },
-  ],
-};
 
 export const StudentProfile = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const response = await studentAPI.getProfile(id!);
+        setProfile(response.data.student);
+      } catch (error: any) {
+        console.error('Error fetching profile:', error);
+        toast.error('Failed to load profile');
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProfile();
+    }
+  }, [id, navigate]);
+
+  const handlePhotoUpload = async (type: 'avatar' | 'cover', file: File) => {
+    try {
+      setUploading(true);
+      // For now, we'll use a placeholder. In production, upload to cloud storage
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        if (type === 'avatar') {
+          setProfile({ ...profile, profilePicture: base64 });
+        } else {
+          setProfile({ ...profile, coverImage: base64 });
+        }
+        toast.success(`${type === 'avatar' ? 'Profile' : 'Cover'} photo updated!`);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error('Failed to upload photo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-background overflow-hidden">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <DashboardNavbar onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading profile...</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return null;
+  }
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -137,15 +121,22 @@ export const StudentProfile = () => {
               {/* Cover Image */}
               <div className="h-64 md:h-80 relative overflow-hidden">
                 <img
-                  src={mockProfile.coverImage}
+                  src={profile.coverImage || 'https://images.unsplash.com/photo-1557683316-973673baf926?w=1200'}
                   alt="Cover"
                   className="w-full h-full object-cover"
                 />
                 {isEditing && (
-                  <button className="absolute top-4 right-4 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-all flex items-center gap-2">
+                  <label className="absolute top-4 right-4 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-all flex items-center gap-2 cursor-pointer">
                     <Edit className="w-4 h-4" />
                     Change Cover
-                  </button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && handlePhotoUpload('cover', e.target.files[0])}
+                      disabled={uploading}
+                    />
+                  </label>
                 )}
               </div>
 
@@ -157,18 +148,25 @@ export const StudentProfile = () => {
                     <div className="relative">
                       <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-background bg-background overflow-hidden">
                         <img
-                          src={mockProfile.avatar}
-                          alt={mockProfile.name}
+                          src={profile.profilePicture || profile.avatar || 'https://randomuser.me/api/portraits/men/1.jpg'}
+                          alt={profile.name || profile.fullName}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      {mockProfile.online && (
+                      {profile.online && (
                         <span className="absolute bottom-4 right-4 w-6 h-6 bg-green-500 border-4 border-background rounded-full"></span>
                       )}
                       {isEditing && (
-                        <button className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full hover:opacity-90">
+                        <label className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full hover:opacity-90 cursor-pointer">
                           <Edit className="w-4 h-4" />
-                        </button>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && handlePhotoUpload('avatar', e.target.files[0])}
+                            disabled={uploading}
+                          />
+                        </label>
                       )}
                     </div>
 
@@ -177,21 +175,24 @@ export const StudentProfile = () => {
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <h1 className="text-2xl md:text-3xl font-bold">{mockProfile.name}</h1>
-                            {mockProfile.verified && (
+                            <h1 className="text-2xl md:text-3xl font-bold">{profile.name}</h1>
+                            {profile.verified && (
                               <CheckCircle className="w-6 h-6 text-blue-500 fill-blue-500" />
                             )}
                           </div>
-                          <p className="text-lg text-muted-foreground mb-2">{mockProfile.role}</p>
+                          <p className="text-lg text-muted-foreground mb-2">{profile.role || `${profile.degree} Student`}</p>
                           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              {mockProfile.location}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              {mockProfile.socialLinks.linkedin && (
+                            {profile.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-4 h-4" />
+                                {profile.location}
+                              </span>
+                            )}
+                            {profile.socialLinks && (
+                              <div className="flex items-center gap-2">
+                              {profile.socialLinks?.linkedin && (
                                 <a
-                                  href={mockProfile.socialLinks.linkedin}
+                                  href={profile.socialLinks.linkedin}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="p-2 hover:bg-foreground/5 rounded-lg transition-all"
@@ -199,9 +200,9 @@ export const StudentProfile = () => {
                                   <Linkedin className="w-4 h-4" />
                                 </a>
                               )}
-                              {mockProfile.socialLinks.github && (
+                              {profile.socialLinks.github && (
                                 <a
-                                  href={mockProfile.socialLinks.github}
+                                  href={profile.socialLinks.github}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="p-2 hover:bg-foreground/5 rounded-lg transition-all"
@@ -209,9 +210,9 @@ export const StudentProfile = () => {
                                   <Github className="w-4 h-4" />
                                 </a>
                               )}
-                              {mockProfile.socialLinks.portfolio && (
+                              {profile.socialLinks.portfolio && (
                                 <a
-                                  href={mockProfile.socialLinks.portfolio}
+                                  href={profile.socialLinks.portfolio}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="p-2 hover:bg-foreground/5 rounded-lg transition-all"
@@ -219,7 +220,8 @@ export const StudentProfile = () => {
                                   <Globe className="w-4 h-4" />
                                 </a>
                               )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -244,11 +246,11 @@ export const StudentProfile = () => {
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   {[
-                    { label: 'Connections', value: mockProfile.stats.connections, icon: Users },
-                    { label: 'Mentorships', value: mockProfile.stats.mentorships, icon: TrendingUp },
-                    { label: 'Posts', value: mockProfile.stats.posts, icon: MessageCircle },
-                    { label: 'Events', value: mockProfile.stats.events, icon: Calendar },
-                  ].map((stat) => {
+                    { label: 'Connections', value: profile.stats?.connections || 0, icon: Users },
+                    { label: 'Mentorships', value: profile.stats?.mentorships || 0, icon: TrendingUp },
+                    { label: 'Posts', value: profile.stats?.posts || 0, icon: MessageCircle },
+                    { label: 'Events', value: profile.stats?.events || 0, icon: Calendar },
+                  ].map((stat: any) => {
                     const Icon = stat.icon;
                     return (
                       <div key={stat.label} className="glass p-4 rounded-xl text-center">
@@ -273,7 +275,7 @@ export const StudentProfile = () => {
                   className="glass p-6 rounded-xl"
                 >
                   <h2 className="text-xl font-bold mb-4">About</h2>
-                  <p className="text-muted-foreground leading-relaxed">{mockProfile.bio}</p>
+                  <p className="text-muted-foreground leading-relaxed">{profile.bio}</p>
                 </motion.div>
 
                 {/* Skills */}
@@ -285,7 +287,7 @@ export const StudentProfile = () => {
                 >
                   <h2 className="text-xl font-bold mb-4">Skills & Expertise</h2>
                   <div className="flex flex-wrap gap-3">
-                    {mockProfile.skills.map((skill) => (
+                    {profile.skills?.map((skill: any) => (
                       <div
                         key={skill.name}
                         className={`px-4 py-2 rounded-lg ${getCategoryColor(skill.category)} flex items-center gap-2`}
@@ -306,7 +308,7 @@ export const StudentProfile = () => {
                 >
                   <h2 className="text-xl font-bold mb-4">Achievements</h2>
                   <div className="space-y-4">
-                    {mockProfile.achievements.map((achievement, index) => {
+                    {profile.achievements?.map((achievement: any, index: number) => {
                       const Icon = achievement.icon;
                       return (
                         <div key={index} className="flex gap-4 p-4 border border-border rounded-lg">
@@ -336,11 +338,11 @@ export const StudentProfile = () => {
                     <div className="flex items-center gap-2">
                       <Star className="w-5 h-5 fill-amber-500 text-amber-500" />
                       <span className="font-semibold">5.0</span>
-                      <span className="text-sm text-muted-foreground">({mockProfile.reviews.length})</span>
+                      <span className="text-sm text-muted-foreground">({profile.reviews?.length || 0})</span>
                     </div>
                   </div>
                   <div className="space-y-4">
-                    {mockProfile.reviews.map((review, index) => (
+                    {profile.reviews?.map((review: any, index: number) => (
                       <div key={index} className="p-4 border border-border rounded-lg">
                         <div className="flex items-start gap-3 mb-3">
                           <img
@@ -381,24 +383,26 @@ export const StudentProfile = () => {
                   <div className="space-y-3 text-sm">
                     <div>
                       <span className="text-muted-foreground">University</span>
-                      <p className="font-medium">{mockProfile.academic.university}</p>
+                      <p className="font-medium">{profile.academic?.university || profile.university || 'Not specified'}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Degree</span>
-                      <p className="font-medium">{mockProfile.academic.degree} in {mockProfile.academic.branch}</p>
+                      <p className="font-medium">{profile.academic?.degree || profile.degree || 'Not specified'} {profile.academic?.branch || profile.branch ? `in ${profile.academic?.branch || profile.branch}` : ''}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Year</span>
-                      <p className="font-medium">{mockProfile.academic.year}</p>
+                      <p className="font-medium">{profile.academic?.year || profile.year || 'Not specified'}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Expected Graduation</span>
-                      <p className="font-medium">{mockProfile.academic.graduation}</p>
+                      <p className="font-medium">{profile.academic?.graduation || profile.graduationYear || 'Not specified'}</p>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">CGPA</span>
-                      <p className="font-medium">{mockProfile.academic.cgpa}/10.0</p>
-                    </div>
+                    {(profile.academic?.cgpa || profile.cgpa) && (
+                      <div>
+                        <span className="text-muted-foreground">CGPA</span>
+                        <p className="font-medium">{profile.academic?.cgpa || profile.cgpa}/10.0</p>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
 
@@ -417,7 +421,7 @@ export const StudentProfile = () => {
                     <div>
                       <h3 className="text-sm font-medium mb-2">Career Interests</h3>
                       <div className="flex flex-wrap gap-2">
-                        {mockProfile.interests.career.map((interest) => (
+                        {profile.interests?.career?.map((interest: any) => (
                           <span key={interest} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs">
                             {interest}
                           </span>
@@ -427,7 +431,7 @@ export const StudentProfile = () => {
                     <div>
                       <h3 className="text-sm font-medium mb-2">Target Companies</h3>
                       <div className="flex flex-wrap gap-2">
-                        {mockProfile.interests.companies.map((company) => (
+                        {profile.interests?.companies?.map((company: any) => (
                           <span key={company} className="px-3 py-1 bg-secondary/10 text-secondary rounded-full text-xs">
                             {company}
                           </span>
