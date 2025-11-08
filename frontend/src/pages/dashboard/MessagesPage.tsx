@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -16,6 +17,8 @@ import {
 } from 'lucide-react';
 import { Sidebar } from '../../components/dashboard/Sidebar';
 import { DashboardNavbar } from '../../components/dashboard/DashboardNavbar';
+import { studentAPI } from '../../services/api';
+import toast from 'react-hot-toast';
 
 // Mock conversations data
 const mockConversations = [
@@ -149,6 +152,7 @@ const formatMessageTime = (date: Date) => {
 };
 
 export const MessagesPage = () => {
+  const [searchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,10 +161,54 @@ export const MessagesPage = () => {
   const [messages, setMessages] = useState<Record<number, any[]>>(mockMessages as any);
   const [isTyping, setIsTyping] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [newConversation, setNewConversation] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const selectedConv = mockConversations.find((c) => c.id === selectedConversation);
+  // Load user profile if userId is provided in query params
+  useEffect(() => {
+    const userId = searchParams.get('userId');
+    if (userId) {
+      loadUserProfile(userId);
+    }
+  }, [searchParams]);
+
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const response = await studentAPI.getProfile(userId);
+      const user = response.data.student;
+      
+      // Create a new conversation object
+      const newConv = {
+        id: parseInt(userId) || Date.now(),
+        name: user.fullName || user.name || 'Unknown User',
+        role: `${user.degree || ''} ${user.branch ? 'in ' + user.branch : ''} • ${user.university || ''}`.trim(),
+        avatar: user.profilePicture || `https://ui-avatars.com/api/?name=${user.fullName || user.name}`,
+        lastMessage: 'Start a conversation',
+        timestamp: new Date(),
+        unread: 0,
+        online: false,
+        pinned: false,
+      };
+      
+      setNewConversation(newConv);
+      setSelectedConversation(newConv.id);
+      
+      // Initialize empty messages for this conversation
+      if (!messages[newConv.id]) {
+        setMessages(prev => ({ ...prev, [newConv.id]: [] }));
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      toast.error('Failed to load user profile');
+    }
+  };
+
+  const allConversations = newConversation 
+    ? [newConversation, ...mockConversations.filter(c => c.id !== newConversation.id)]
+    : mockConversations;
+
+  const selectedConv = allConversations.find((c) => c.id === selectedConversation);
   const currentMessages = selectedConversation ? messages[selectedConversation] || [] : [];
 
   const scrollToBottom = () => {
@@ -238,7 +286,7 @@ export const MessagesPage = () => {
     }, 4000);
   };
 
-  const filteredConversations = mockConversations.filter((conv) => {
+  const filteredConversations = allConversations.filter((conv) => {
     const matchesSearch =
       searchQuery === '' ||
       conv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
