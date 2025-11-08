@@ -1,6 +1,8 @@
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Student = require('../models/Student');
+const Alumni = require('../models/Alumni');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { validationResult } = require('express-validator');
@@ -142,16 +144,28 @@ exports.protect = catchAsync(async (req, res, next) => {
   // 2) Verification token
   const decoded = await jwt.verify(token, process.env.JWT_SECRET);
 
-  // 3) Check if user still exists
-  const currentUser = await User.findById(decoded.id);
+  // 3) Check if user still exists - try Student, Alumni, then User models
+  let currentUser = await Student.findById(decoded.id);
+  let userType = 'student';
+  
+  if (!currentUser) {
+    currentUser = await Alumni.findById(decoded.id);
+    userType = 'alumni';
+  }
+  
+  if (!currentUser) {
+    currentUser = await User.findById(decoded.id);
+    userType = 'user';
+  }
+  
   if (!currentUser) {
     return next(
       new AppError('The user belonging to this token no longer exists.', 401)
     );
   }
 
-  // 4) Check if user changed password after the token was issued
-  if (currentUser.changedPasswordAfter(decoded.iat)) {
+  // 4) Check if user changed password after the token was issued (if method exists)
+  if (currentUser.changedPasswordAfter && currentUser.changedPasswordAfter(decoded.iat)) {
     return next(
       new AppError('User recently changed password! Please log in again.', 401)
     );
@@ -159,6 +173,8 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // GRANT ACCESS TO PROTECTED ROUTE
   req.user = currentUser;
+  req.user.userType = userType; // Add userType for easy access
+  req.user.role = userType; // Also set role for compatibility
   next();
 });
 
